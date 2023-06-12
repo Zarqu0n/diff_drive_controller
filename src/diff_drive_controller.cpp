@@ -162,6 +162,8 @@ namespace diff_drive_controller{
     , wheel_joints_size_(0)
     , publish_cmd_(false)
     , publish_wheel_joint_controller_state_(false)
+    , curr_vel_lin_limit_(0.7)
+    , max_vel_lin_limit_(0.7)
   {
   }
 
@@ -251,6 +253,12 @@ namespace diff_drive_controller{
     controller_nh.param("emergency_brake", emergency_brake_, emergency_brake_);
     ROS_WARN_STREAM_NAMED(name_, "Starting with EMERGENCY BRAKE: "
           << (emergency_brake_?"on":"off"));
+
+    // Velocity limits:
+    controller_nh.param("max_vel_lin_limit", max_vel_lin_limit_, max_vel_lin_limit_);
+    ROS_INFO_STREAM_NAMED(name_, "Max linear velocity limit set to " << max_vel_lin_limit_ << " m/s");
+    controller_nh.param("curr_vel_lin_limit", curr_vel_lin_limit_, curr_vel_lin_limit_);
+    ROS_INFO_STREAM_NAMED(name_, "Current linear velocity limit set to " << curr_vel_lin_limit_ << " m/s");
 
     controller_nh.param("base_frame_id", base_frame_id_, base_frame_id_);
     ROS_INFO_STREAM_NAMED(name_, "Base frame_id set to " << base_frame_id_);
@@ -375,6 +383,9 @@ namespace diff_drive_controller{
     dynamic_params.enable_odom_tf = enable_odom_tf_;
     dynamic_params.emergency_brake = emergency_brake_;
 
+    dynamic_params.max_vel_lin_limit = max_vel_lin_limit_;
+    dynamic_params.curr_vel_lin_limit = curr_vel_lin_limit_;
+
     dynamic_params_.writeFromNonRT(dynamic_params);
 
     // Initialize dynamic_reconfigure server
@@ -387,6 +398,10 @@ namespace diff_drive_controller{
     config.enable_odom_tf = enable_odom_tf_;
     config.emergency_brake = emergency_brake_;
 
+
+    config.max_vel_lin_limit = max_vel_lin_limit_;
+    config.curr_vel_lin_limit = curr_vel_lin_limit_;
+    
     dyn_reconf_server_ = std::make_shared<ReconfigureServer>(dyn_reconf_server_mutex_, controller_nh);
 
     // Update parameters
@@ -512,6 +527,11 @@ namespace diff_drive_controller{
       brake();
       curr_cmd.lin = 0.0;
       curr_cmd.ang = 0.0;
+    }
+
+    if (curr_cmd.lin > max_vel_lin_limit_)
+    {
+      curr_cmd.lin = max_vel_lin_limit_;
     }
 
     // Publish limited velocity:
@@ -785,6 +805,10 @@ namespace diff_drive_controller{
 
     dynamic_params.emergency_brake = config.emergency_brake;
 
+    dynamic_params.max_vel_lin_limit = config.max_vel_lin_limit;
+
+    dynamic_params.curr_vel_lin_limit = config.curr_vel_lin_limit;
+
     dynamic_params_.writeFromNonRT(dynamic_params);
 
     ROS_INFO_STREAM_NAMED(name_, "Dynamic Reconfigure:\n" << dynamic_params);
@@ -802,6 +826,9 @@ namespace diff_drive_controller{
     publish_period_ = ros::Duration(1.0 / dynamic_params.publish_rate);
     enable_odom_tf_ = dynamic_params.enable_odom_tf;
     emergency_brake_ = dynamic_params.emergency_brake;
+    
+    max_vel_lin_limit_ = dynamic_params.max_vel_lin_limit;
+    limiter_lin_.max_velocity = dynamic_params.curr_vel_lin_limit;
   }
 
   void DiffDriveController::publishWheelData(const ros::Time& time, const ros::Duration& period, Commands& curr_cmd,

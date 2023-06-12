@@ -169,6 +169,10 @@ namespace diff_drive_controller{
     /// Enable to stop immediately without limits.
     bool emergency_brake_;
 
+    // Speed limiters:
+    double curr_vel_lin_limit_;
+    double max_vel_lin_limit_;
+
     /// Frame to use for the robot base:
     std::string base_frame_id_;
 
@@ -208,6 +212,8 @@ namespace diff_drive_controller{
       double publish_rate;
       bool enable_odom_tf;
       bool emergency_brake;
+      double curr_vel_lin_limit;
+      double max_vel_lin_limit;
 
       DynamicParams()
         : left_wheel_radius_multiplier(1.0)
@@ -217,6 +223,8 @@ namespace diff_drive_controller{
         , publish_rate(50)
         , enable_odom_tf(true)
         , emergency_brake(false)
+        , curr_vel_lin_limit(0.7)
+        , max_vel_lin_limit(0.9)
       {}
 
       friend std::ostream& operator<<(std::ostream& os, const DynamicParams& params)
@@ -234,7 +242,9 @@ namespace diff_drive_controller{
            << "\t\tPublish frame odom on tf: " << (params.enable_odom_tf?"enabled":"disabled")       << "\n"
            //
            << "\tVelocity parameters:\n"
-           << "\t\tEmergency brake: " << (params.emergency_brake?"enabled":"disabled");
+           << "\t\tEmergency brake: " << (params.emergency_brake?"enabled":"disabled") << "\n"
+           << "\t\tMax velocity limit: " << params.max_vel_lin_limit << "\n"
+           << "\t\tCurrent velocity limit: " << params.curr_vel_lin_limit << "\n";
 
 
         return os;

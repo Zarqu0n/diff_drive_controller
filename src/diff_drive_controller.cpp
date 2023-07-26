@@ -163,9 +163,9 @@ namespace diff_drive_controller{
     , publish_cmd_(false)
     , publish_wheel_joint_controller_state_(false)
     , curr_vel_lin_limit_(0.7)
+    , deceleration_(0.5)
   {
   }
-
   bool DiffDriveController::init(hardware_interface::VelocityJointInterface* hw,
             ros::NodeHandle& root_nh,
             ros::NodeHandle &controller_nh)
@@ -252,7 +252,9 @@ namespace diff_drive_controller{
     controller_nh.param("emergency_brake", emergency_brake_, emergency_brake_);
     ROS_WARN_STREAM_NAMED(name_, "Starting with EMERGENCY BRAKE: "
           << (emergency_brake_?"on":"off"));
-
+    
+    controller_nh.param("deceleration", deceleration_, deceleration_);
+    ROS_INFO_STREAM_NAMED(name_, "Deceleration is set to " << deceleration_ << " m/s^2");
     // Velocity limits:
     controller_nh.param("curr_vel_lin_limit", curr_vel_lin_limit_, curr_vel_lin_limit_);
     ROS_INFO_STREAM_NAMED(name_, "Current linear velocity limit set to " << curr_vel_lin_limit_ << " m/s");
@@ -393,7 +395,7 @@ namespace diff_drive_controller{
     config.publish_rate = publish_rate;
     config.enable_odom_tf = enable_odom_tf_;
     config.emergency_brake = emergency_brake_;
-
+    config.deceleration = deceleration_;
     config.curr_vel_lin_limit = curr_vel_lin_limit_;
     
     dyn_reconf_server_ = std::make_shared<ReconfigureServer>(dyn_reconf_server_mutex_, controller_nh);
@@ -793,7 +795,7 @@ namespace diff_drive_controller{
     dynamic_params.enable_odom_tf = config.enable_odom_tf;
 
     dynamic_params.emergency_brake = config.emergency_brake;
-
+    dynamic_params.deceleration = config.deceleration;
     dynamic_params.curr_vel_lin_limit = config.curr_vel_lin_limit;
 
     dynamic_params_.writeFromNonRT(dynamic_params);
@@ -813,7 +815,7 @@ namespace diff_drive_controller{
     publish_period_ = ros::Duration(1.0 / dynamic_params.publish_rate);
     enable_odom_tf_ = dynamic_params.enable_odom_tf;
     emergency_brake_ = dynamic_params.emergency_brake;
-    
+    deceleration_ = dynamic_params.deceleration;
     limiter_lin_.max_velocity = dynamic_params.curr_vel_lin_limit;
   }
 

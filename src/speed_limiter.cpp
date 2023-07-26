@@ -58,7 +58,8 @@ namespace diff_drive_controller
     double min_acceleration,
     double max_acceleration,
     double min_jerk,
-    double max_jerk
+    double max_jerk,
+    double deceleration
   )
   : has_velocity_limits(has_velocity_limits)
   , has_acceleration_limits(has_acceleration_limits)
@@ -69,6 +70,7 @@ namespace diff_drive_controller
   , max_acceleration(max_acceleration)
   , min_jerk(min_jerk)
   , max_jerk(max_jerk)
+  , deceleration(deceleration)
   {
   }
 

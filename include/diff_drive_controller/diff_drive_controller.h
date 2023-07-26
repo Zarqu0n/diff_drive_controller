@@ -169,6 +169,7 @@ namespace diff_drive_controller{
     /// Enable to stop immediately without limits.
     bool emergency_brake_;
 
+    double deceleration_;
     // Speed limiters:
     double curr_vel_lin_limit_;
 
@@ -212,7 +213,7 @@ namespace diff_drive_controller{
       bool enable_odom_tf;
       bool emergency_brake;
       double curr_vel_lin_limit;
-
+      double deceleration;
       DynamicParams()
         : left_wheel_radius_multiplier(1.0)
         , right_wheel_radius_multiplier(1.0)
@@ -222,6 +223,7 @@ namespace diff_drive_controller{
         , enable_odom_tf(true)
         , emergency_brake(false)
         , curr_vel_lin_limit(0.7)
+        , deceleration(0.5)
       {}
 
       friend std::ostream& operator<<(std::ostream& os, const DynamicParams& params)
@@ -240,8 +242,8 @@ namespace diff_drive_controller{
            //
            << "\tVelocity parameters:\n"
            << "\t\tEmergency brake: " << (params.emergency_brake?"enabled":"disabled") << "\n"
-           << "\t\tCurrent velocity limit: " << params.curr_vel_lin_limit << "\n";
-
+           << "\t\tCurrent velocity limit: " << params.curr_vel_lin_limit << "\n"
+            << "\t\tDeceleration limit: " << params.deceleration << "\n";
 
         return os;
       }

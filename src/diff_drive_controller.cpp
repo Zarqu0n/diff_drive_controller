@@ -288,6 +288,8 @@ namespace diff_drive_controller{
     controller_nh.param("angular/z/min_acceleration"       , limiter_ang_.min_acceleration       , -limiter_ang_.max_acceleration      );
     controller_nh.param("angular/z/max_jerk"               , limiter_ang_.max_jerk               ,  limiter_ang_.max_jerk              );
     controller_nh.param("angular/z/min_jerk"               , limiter_ang_.min_jerk               , -limiter_ang_.max_jerk              );
+    
+    saved_min_acc_lim_ = limiter_lin_.min_acceleration;
 
     // Publish limited velocity:
     controller_nh.param("publish_cmd", publish_cmd_, publish_cmd_);
@@ -381,6 +383,7 @@ namespace diff_drive_controller{
     dynamic_params.publish_rate = publish_rate;
     dynamic_params.enable_odom_tf = enable_odom_tf_;
     dynamic_params.emergency_brake = emergency_brake_;
+    dynamic_params.deceleration = deceleration_;
 
     dynamic_params.curr_vel_lin_limit = curr_vel_lin_limit_;
 
@@ -511,6 +514,17 @@ namespace diff_drive_controller{
 
     // Limit velocities and accelerations:
     const double cmd_dt(period.toSec());
+    saved_min_acc_lim_ = limiter_lin_.min_acceleration;
+    if (emergency_brake_)
+    {
+      limiter_lin_.min_acceleration = -deceleration_;    
+      // brake();
+    }
+    else
+    {
+      limiter_lin_.min_acceleration = saved_min_acc_lim_;
+    }
+
 
     limiter_lin_.limit(curr_cmd.lin, last0_cmd_.lin, last1_cmd_.lin, cmd_dt);
     limiter_ang_.limit(curr_cmd.ang, last0_cmd_.ang, last1_cmd_.ang, cmd_dt);
@@ -518,12 +532,6 @@ namespace diff_drive_controller{
     last1_cmd_ = last0_cmd_;
     last0_cmd_ = curr_cmd;
 
-    if (emergency_brake_)
-    {
-      brake();
-      curr_cmd.lin = 0.0;
-      curr_cmd.ang = 0.0;
-    }
 
     // Publish limited velocity:
     if (publish_cmd_ && cmd_vel_pub_ && cmd_vel_pub_->trylock())

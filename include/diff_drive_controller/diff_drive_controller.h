@@ -169,7 +169,9 @@ namespace diff_drive_controller{
     /// Enable to stop immediately without limits.
     bool emergency_brake_;
 
+    // Deceleration limits:
     double deceleration_;
+    double saved_min_acc_lim_;
     // Speed limiters:
     double curr_vel_lin_limit_;
 
